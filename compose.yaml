@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: zp2
+      POSTGRES_USER: zp2
+      POSTGRES_PASSWORD: zp2
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zp2 -d zp2"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    volumes:
+      - zp2-postgres:/var/lib/postgresql/data
+
+  nex:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PN_ZP2_AUTH_PORT: "28500"
+      PN_ZP2_SECURE_PORT: "28501"
+      # The address a console is told to reach the secure server on. Override
+      # in .env or the shell; defaults to localhost for a LAN test.
+      PN_ZP2_SECURE_HOST: ${PN_ZP2_SECURE_HOST:-localhost}
+      PN_ZP2_POSTGRES_URI: postgres://zp2:zp2@postgres:5432/zp2?sslmode=disable
+      PN_ZP2_KERBEROS_PASSWORD: ${PN_ZP2_KERBEROS_PASSWORD:-change-me}
+      # Local preservation mode: accounts from settings.json, login token not
+      # validated. Flip to shared mode by setting PN_ZP2_LOCAL_MODE=0
+      # and providing the two NEX_* secrets (matching your account server).
+      PN_ZP2_LOCAL_MODE: ${PN_ZP2_LOCAL_MODE:-1}
+      PN_ZP2_NEX_VERSION: ${PN_ZP2_NEX_VERSION:-}
+      PN_ZP2_LEGACY_SIGNATURE: ${PN_ZP2_LEGACY_SIGNATURE:-}
+      PN_ZP2_STRUCTURE_HEADER: ${PN_ZP2_STRUCTURE_HEADER:-}
+      PN_ZP2_SETTINGS_PATH: /home/go/app/settings.json
+      PN_ZP2_NEX_TOKEN_AES_KEY: ${PN_ZP2_NEX_TOKEN_AES_KEY:-}
+      PN_ZP2_NEX_PASSWORD_SECRET: ${PN_ZP2_NEX_PASSWORD_SECRET:-}
+    ports:
+      - "28500:28500/udp"
+      - "28501:28501/udp"
+    volumes:
+      - ./settings.json:/home/go/app/settings.json:ro
+
+volumes:
+  zp2-postgres:

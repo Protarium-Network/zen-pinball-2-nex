@@ -1,0 +1,22 @@
+This server is built on the Pretendo Network NEX stack:
+
+  - github.com/PretendoNetwork/nex-go
+  - github.com/PretendoNetwork/nex-protocols-go
+  - github.com/PretendoNetwork/nex-protocols-common-go
+  - github.com/PretendoNetwork/plogger-go
+
+all licensed under the GNU Affero General Public License v3.0.
+
+internal/nex-protocols-common-go-patch/ is a vendored fork of
+nex-protocols-common-go with local DataStore changes (an S3 presigner and
+adjusted DataStore method behaviour). It keeps its own upstream AGPL-3.0
+LICENSE.
+
+The matchmaking.* / tracking.* PostgreSQL schema is created by
+nex-protocols-common-go itself (CommonProtocol.SetManager);
+docs/matchmaking-schema.md keeps a reference map of that layout.
+
+The Zen Pinball 2 NEX configuration (game server ID 10113800, access key
+2ff15f7e, NEX 3.4.13) comes from kinnay's public Wii U NEX games list
+(https://kinnay.github.io/nexwiiu.json). No proprietary Nintendo or Zen
+Studios code or assets are included.
