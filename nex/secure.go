@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"sync/atomic"
+	"time"
 
 	nex "github.com/PretendoNetwork/nex-go/v2"
 	common_ranking "github.com/PretendoNetwork/nex-protocols-common-go/v2/ranking"
@@ -15,6 +17,10 @@ import (
 	"github.com/Protarium-Network/zen-pinball-2-nex/database"
 	"github.com/Protarium-Network/zen-pinball-2-nex/globals"
 )
+
+var nexUniqueIDCounter atomic.Uint64
+
+func init() { nexUniqueIDCounter.Store(uint64(time.Now().Unix()) << 16) }
 
 var SecureServer *nex.PRUDPServer
 var SecureEndpoint *nex.PRUDPEndPoint
@@ -69,7 +75,11 @@ func registerSecureServerProtocols() {
 
 	utilityProtocol := utility.NewProtocol()
 	SecureEndpoint.RegisterServiceProtocol(utilityProtocol)
-	common_utility.NewCommonProtocol(utilityProtocol)
+	utilityCommon := common_utility.NewCommonProtocol(utilityProtocol)
+	// The game calls AcquireNexUniqueID before uploading scores; without a
+	// generator the call fails and UploadScore is never sent. Seeded from the
+	// clock so IDs stay unique across restarts.
+	utilityCommon.GenerateNEXUniqueID = func() uint64 { return nexUniqueIDCounter.Add(1) }
 
 	rankingProtocol := ranking.NewProtocol()
 	SecureEndpoint.RegisterServiceProtocol(rankingProtocol)
